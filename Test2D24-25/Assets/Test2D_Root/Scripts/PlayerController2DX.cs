@@ -12,10 +12,14 @@ public class PlayerController2DX : MonoBehaviour
 
     [Header("Movement Parameters")]
     public float speed;
+    [SerializeField] bool isFacingRight;
 
     [Header("Jump Parameters")]
     public float jumpForce;
     [SerializeField] bool isGrounded;
+    [SerializeField] GameObject groundCheck;
+    [SerializeField] float groundCheckRadius;
+    [SerializeField] LayerMask groundLayer;
 
 
 
@@ -25,12 +29,15 @@ public class PlayerController2DX : MonoBehaviour
         //Para autoreferenciar: nombre de variable = GetComponent<tipodevariable>()
         playerRB = GetComponent<Rigidbody2D>();
         playerInput = GetComponent<PlayerInput>();
+        isFacingRight = true;
     }
 
     // Update is called once per frame
     void Update()
     {
-
+        GroundCheck();
+        if (moveInput.x > 0 && !isFacingRight) Flip();
+        if (moveInput.x < 0 && isFacingRight) Flip();
     }
 
     private void FixedUpdate()
@@ -41,6 +48,20 @@ public class PlayerController2DX : MonoBehaviour
     void Movement()
     {
         playerRB.velocity = new Vector3(moveInput.x * speed,playerRB.velocity.y,0);
+    }
+
+    void Flip()
+    {
+        Vector3 currentScale = transform.localScale;
+        currentScale.x *= -1;
+        transform.localScale = currentScale;
+        isFacingRight = !isFacingRight;
+    }
+
+    void GroundCheck()
+    {
+        //isGrounded es verdadero cuando el circulo detector toque la layer ground
+        isGrounded = Physics2D.OverlapCircle(groundCheck.transform.position, groundCheckRadius, groundLayer);
     }
 
     #region Input Methods
@@ -57,7 +78,11 @@ public class PlayerController2DX : MonoBehaviour
     {
         if (context.started)
         {
-            playerRB.AddForce(Vector3.up * jumpForce, ForceMode2D.Impulse);
+            if (isGrounded)
+            {
+                playerRB.AddForce(Vector3.up * jumpForce, ForceMode2D.Impulse);
+            }
+       
         }
 
     }
